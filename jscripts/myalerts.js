@@ -1,77 +1,30 @@
-jQuery.noConflict();
-
-jQuery(document).ready(function($)
-{
-	$('body').on({
-		click: function(event)
-		{
-			event.preventDefault();
-			var popup_id = $(this).attr('id') + '_popup';
-
-			$('#' + popup_id).attr('top', $(this).height() + 'px').slideToggle('fast', function() {
-				var toMarkRead = [];
-				$('[id^="alert_row_popup_"]').each(function() {
-					toMarkRead.push($(this).attr('id').substr(16));
-				});
-
-				$.get('xmlhttp.php?action=markRead', {
-					my_post_key: my_post_key,
-					toMarkRead: toMarkRead
-				}, function(data) {
-
-				});
-			});
-			return false;
-		}
-	}, '.myalerts_popup_hook');
-
-	$('.myalerts_popup *').on('click', function(event) {
-		event.stopPropagation();
-	});
-
-	$("body:not('.myalerts_popup:visible')").on('click', function() {
-        $('.myalerts_popup:visible').hide();
-	});
-
-	$('#getUnreadAlerts').on('click', function(event) {
-		event.preventDefault();
-		$.get('xmlhttp.php?action=getNewAlerts', function(data) {
-			$('#latestAlertsListing').prepend(data);
-		});
-	});
-
-	$('.deleteAlertButton').on('click', function(event) {
-		event.preventDefault();
-		var deleteButton = $(this);
-
-		$.getJSON(deleteButton.attr('href'), {accessMethod: 'js'}, function(data) {
-			if (data.success)
+var MyAlerts = {
+	markRead : function (idArray) {
+		$.post(
+			"xmlhttp.php",
 			{
-				deleteButton.parents('tr').get(0).remove();
-				if (data.template)
-				{
-					$('#latestAlertsListing').html(data.template);
-				}
+				module : "MyAlerts",
+				action : "markRead",
+				toMarkRead : idArray,
+				my_post_key : my_post_key
 			}
-			else
+		);
+	},
+	deleteAlert : function (id) {
+		var toReturn = false;
+
+		$.post(
+			"xmlhttp.php",
 			{
-				alert(data.error);
+				module : "MyAlerts",
+				action : "deleteAlert",
+				id : id,
+				my_post_key : my_post_key
 			}
+		).success(function (data) {
+			toReturn = data;
 		});
-	});
 
-	if (typeof myalerts_autorefresh !== 'undefined' && myalerts_autorefresh > 0)
-	{
-		window.setInterval(function() {
-			$.get('xmlhttp.php?action=getNewAlerts', function(data) {
-				$('#latestAlertsListing').prepend(data);
-			});
-		}, myalerts_autorefresh * 1000);
+		return toReturn;
 	}
-
-	if (typeof unreadAlerts !== 'undefined' && unreadAlerts > 0)
-	{
-		document.title = document.title + ' (' + unreadAlerts + ')';
-	}
-
-});
+};
